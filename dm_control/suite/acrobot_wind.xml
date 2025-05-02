@@ -39,11 +39,7 @@ Based on Coulomb's [1] rather than Spong's [2] model.
   </worldbody>
 
    <actuator>
-    <motor name="elbow" joint="elbow" gear="2" ctrllimited="true" ctrlrange="-1 1"/>
-  </actuator>
-    
-  <!-- Wind actuator -->
-  <general name="wind" site="wind_site" dyntype="force" ctrllimited="true" ctrlrange="-5 5"/>
-</actuator>
+    <motor name="elbow" joint="elbow" gear="2" ctrllimited="true" ctrlrange="-1 1"/>    
+   </actuator>
 
 </mujoco>
