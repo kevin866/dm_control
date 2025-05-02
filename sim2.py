@@ -2,31 +2,38 @@ import mujoco
 import glfw
 import numpy as np
 
-# Path to your XML file
-xml_path = "dm_control/suite/acrobot_wind.xml"
+# Initialize GLFW
+glfw.init()
+window = glfw.create_window(1200, 900, "MuJoCo Viewer", None, None)
+glfw.make_context_current(window)
 
 # Load model and data
-model = mujoco.MjModel.from_xml_path(xml_path)
+model = mujoco.MjModel.from_xml_path("dm_control/suite/acrobot_wind.xml")
 data = mujoco.MjData(model)
 
-# Initialize xfrc_applied with zeros, shape should be (model.nbody, 6)
-data.xfrc_applied = np.zeros((model.nbody, 6), dtype=np.float64)
+# Create context and scene
+scene = mujoco.MjvScene(model, maxgeom=10000)
+cam = mujoco.MjvCamera()
+opt = mujoco.MjvOption()
+context = mujoco.MjrContext(model, mujoco.mjtFontScale.mjFONTSCALE_150)
 
-# Define force and torque as 3D vectors (reshape to (3, 1))
-force = np.array([0.0, 0.0, 5.0]).reshape(3, 1)
-torque = np.array([0.0, 0.0, 0.0]).reshape(3, 1)
-point = np.array([0.0, 0.0, 0.0]).reshape(3, 1)  # application point in local coordinates
+# Set default camera
+mujoco.mjv_defaultCamera(cam)
+cam.lookat[:] = [0,0,0]  # Focus on known object
+cam.distance = 10.0
+cam.azimuth = 90
+cam.elevation = -30
 
-# Get body ID
-body_id = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_BODY, "upper_arm")
-# Apply external force/torque
-print(type(force[0]))
-mujoco.mj_applyFT(model, data, force, torque, point, body_id, data.xfrc_applied)
+# Main render loop
+while not glfw.window_should_close(window):
+    mujoco.mj_step(model, data)
 
-# Viewer setup and rendering loop
-with mujoco.viewer.launch(model, data) as viewer:
-    print("Press ESC to exit.")
-    while viewer.is_running():
-        step_start = data.time
-        mujoco.mj_step(model, data)
-        viewer.sync()
+    mujoco.mjv_updateScene(model, data, opt, None, cam, mujoco.mjtCatBit.mjCAT_ALL, scene)
+    viewport = mujoco.MjrRect(0, 0, *glfw.get_framebuffer_size(window))
+    mujoco.mjr_render(viewport, scene, context)
+
+    glfw.swap_buffers(window)
+    glfw.poll_events()
+
+# Cleanup
+glfw.terminate()
